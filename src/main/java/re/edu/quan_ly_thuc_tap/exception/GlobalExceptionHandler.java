@@ -1,7 +1,133 @@
 package re.edu.quan_ly_thuc_tap.exception;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.SignatureException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import re.edu.quan_ly_thuc_tap.dto.response.ApiResponse;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<?> handleBadRequestException(BadRequestException ex) {
+        ApiResponse<?> response = ApiResponse.builder()
+                .success(false)
+                .message("Lỗi : " + ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<?> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        ApiResponse<?> response = ApiResponse.builder()
+                .success(false)
+                .message("Lỗi : " + ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<?> handleDuplicateResourceException(DuplicateResourceException ex) {
+        ApiResponse<?> response = ApiResponse.builder()
+                .success(false)
+                .message("Lỗi : " + ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> handleValidationException(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                errors.put(error.getField(), error.getDefaultMessage())
+        );
+
+        ApiResponse<?> response = ApiResponse.builder()
+                .success(false)
+                .message("Lỗi: dữ liệu đầu vào không hợp lệ")
+                .errors(errors)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+
+
+
+
+
+
+
+    // JWT
+    // ----- Lỗi Refresh Token hết hạn
+    @ExceptionHandler({
+            ExpiredJwtException.class,
+            MalformedJwtException.class,
+            SignatureException.class,
+            UnsupportedJwtException.class
+    })
+    public ResponseEntity<?> handleJwtTokenExceptions(Exception ex) {
+        String msg = "Token không hợp lệ";
+        if (ex instanceof io.jsonwebtoken.ExpiredJwtException) msg = "Refresh token đã hết hạn";
+        else if (ex instanceof io.jsonwebtoken.MalformedJwtException) msg = "Định dạng token bị sai";
+        else if (ex instanceof io.jsonwebtoken.security.SignatureException) msg = "Chữ ký token không hợp lệ";
+
+        ApiResponse<?> response = ApiResponse.builder()
+                .success(false)
+                .message("Lỗi : " + msg)
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+
+
+
+
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException ex) {
+        ApiResponse<?> response = ApiResponse.builder()
+                .success(false)
+                .message("Lỗi : " + ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<?> handleIOException(IOException ex) {
+        ApiResponse<?> response = ApiResponse.builder()
+                .success(false)
+                .message("Lỗi Server: Lỗi xử lý dữ liệu hệ thống")
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<?> handleGeneralException(Exception ex) {
+        ApiResponse<?> response = ApiResponse.builder()
+                .success(false)
+                .message("Lỗi Server: " + ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
 }

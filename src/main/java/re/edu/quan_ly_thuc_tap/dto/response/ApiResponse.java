@@ -1,20 +1,20 @@
 package re.edu.quan_ly_thuc_tap.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
+@Builder
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
     private boolean success;
     private String message;
-    private Object data;
-    private T errors;
+    private T data;
+    private Object errors; //chứa ds lỗi validation
     private LocalDateTime timestamp;
 }
