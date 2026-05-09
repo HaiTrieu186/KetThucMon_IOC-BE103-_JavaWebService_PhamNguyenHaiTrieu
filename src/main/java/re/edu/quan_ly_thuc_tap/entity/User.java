@@ -29,7 +29,7 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Column(name = "full_name", length = 100, nullable = false, columnDefinition = "nvarchar(100)")
+    @Column(name = "full_name", length = 100, nullable = false)
     private String fullName;
 
     @Column(name = "email", length = 100, unique = true, nullable = false)
