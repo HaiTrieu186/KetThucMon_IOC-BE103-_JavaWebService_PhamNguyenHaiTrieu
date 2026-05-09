@@ -18,9 +18,9 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
 public class AuthController {
-    public final IAuthService authService;
+    private final IAuthService authService;
 
-    @PostMapping
+    @PostMapping("/login")
     public ResponseEntity<?> login(
             @Valid @RequestBody AuthLoginRequestDTO dto){
         AuthResponse authResponse = authService.login(dto);
@@ -34,14 +34,14 @@ public class AuthController {
         return ResponseEntity.ok(apiResponse);
     }
 
-    @GetMapping
+    @GetMapping("/me")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MENTOR', 'STUDENT')")
     public ResponseEntity<?> getInfo(){
         UserResponse userResponse = authService.getMyInfo();
 
         ApiResponse<UserResponse> apiResponse = ApiResponse.<UserResponse>builder()
                 .success(true)
-                .message("Đăng nhập thành công !")
+                .message("Lấy thông tin cá nhân thành công !")
                 .data(userResponse)
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -60,6 +60,18 @@ public class AuthController {
                 .timestamp(LocalDateTime.now())
                 .build();
         return ResponseEntity.ok(apiResponse);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        authService.logout();
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder()
+                        .success(true)
+                        .message("Đăng xuất thành công!")
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
     }
 
 }

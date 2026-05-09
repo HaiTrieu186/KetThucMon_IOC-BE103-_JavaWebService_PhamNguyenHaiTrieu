@@ -7,8 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 import re.edu.quan_ly_thuc_tap.config.jwt.JwtProvider;
 import re.edu.quan_ly_thuc_tap.config.security.UserDetailsCustom;
 import re.edu.quan_ly_thuc_tap.dto.request.AuthLoginRequestDTO;
@@ -25,7 +24,7 @@ import re.edu.quan_ly_thuc_tap.service.IAuthService;
 import java.util.Collections;
 import java.util.List;
 
-@Repository
+@Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements IAuthService {
     private final UserMapper userMapper;
@@ -114,6 +113,16 @@ public class AuthServiceImpl implements IAuthService {
                 .userName(user.getUserName())
                 .role(user.getRole().name())
                 .build();
+    }
+
+    @Override
+    public void logout() {
+        // 1. Lấy user hiện tại từ SecurityContext
+        User user = getCurrentUser();
+
+        // 2. Xóa refresh token trong DB
+        user.setRefreshToken(null);
+        userRepository.save(user);
     }
 
 

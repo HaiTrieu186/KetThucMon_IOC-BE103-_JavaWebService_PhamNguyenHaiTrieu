@@ -9,4 +9,5 @@ public interface IAuthService {
     AuthResponse login (AuthLoginRequestDTO request);
     UserResponse getMyInfo();
     AuthResponse refreshToken(AuthRefreshRequestDTO request);
+    void logout();
 }
