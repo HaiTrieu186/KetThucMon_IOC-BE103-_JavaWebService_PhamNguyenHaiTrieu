@@ -26,8 +26,6 @@ public interface StudentMapper {
     void updateStudentFromDto(StudentUpdateRequestDTO dto, @MappingTarget Student student);
 
 
-
-
     // Entity -> Response
     @Mapping(target = "userId", source = "user.userId")
     @Mapping(target = "userName", source = "user.userName")
