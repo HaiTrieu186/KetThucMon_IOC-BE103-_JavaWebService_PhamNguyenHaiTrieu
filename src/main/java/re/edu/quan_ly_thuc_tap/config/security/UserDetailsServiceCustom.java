@@ -21,7 +21,7 @@ public class UserDetailsServiceCustom implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUserName(username).orElseThrow(
-                () -> new RuntimeException("Không tìm thấy user với username:"+username)
+                () -> new UsernameNotFoundException("Không tìm thấy user với username: "+username)
         );
 
         List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()));
