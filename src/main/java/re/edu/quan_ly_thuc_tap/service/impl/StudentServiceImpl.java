@@ -122,12 +122,12 @@ public class StudentServiceImpl implements IStudentService {
         Student student = studentRepository.findById(studentId).orElseThrow(
                 () -> new ResourceNotFoundException("Không tìm thấy sinh viên id: " + studentId));
 
-        // Kiểm tra quyền: Nếu là STUDENT thì chỉ được sửa chính mình
+        // STUDENT thì chỉ được sửa chính mình
         if (currentUser.getRole() == RoleEnum.STUDENT && !studentId.equals(currentUser.getUserId())) {
             throw new AccessDeniedException("Bạn không có quyền cập nhật thông tin người khác!");
         }
 
-        // Dùng Mapper "đắp" dữ liệu mới lên Entity cũ
+
         studentMapper.updateUserFromDto(dto, student.getUser());
         studentMapper.updateStudentFromDto(dto, student);
 
