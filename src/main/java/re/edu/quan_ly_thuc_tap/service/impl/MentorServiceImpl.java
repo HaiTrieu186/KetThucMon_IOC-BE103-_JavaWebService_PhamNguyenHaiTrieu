@@ -47,7 +47,7 @@ public class MentorServiceImpl implements IMentorService {
         User currentUser = getCurrentUser();
 
 
-        String searchKeyword = StringUtils.hasText(keyword) ? "%" + keyword.trim() + "%" : null;
+        String searchKeyword = StringUtils.hasText(keyword) ? "%" + keyword.trim() + "%" : "%%";
         Page<Mentor> page = mentorRepository.findAllMentors(searchKeyword, pageable);
 
         // Student

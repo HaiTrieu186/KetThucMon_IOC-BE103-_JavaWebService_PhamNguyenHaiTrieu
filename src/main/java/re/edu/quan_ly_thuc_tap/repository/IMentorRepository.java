@@ -17,8 +17,7 @@ public interface IMentorRepository extends JpaRepository<Mentor, Long> {
     @Query("""
         SELECT m FROM Mentor m
         JOIN m.user u
-        WHERE :keyword IS NULL OR
-               LOWER(u.fullName) LIKE LOWER(:keyword)
+        WHERE LOWER(u.fullName) LIKE LOWER(:keyword)
     """)
     Page<Mentor> findAllMentors(
             @Param("keyword") String keyword,

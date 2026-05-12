@@ -54,7 +54,7 @@ public class StudentServiceImpl implements IStudentService {
         Long mentorId = currentUser.getRole() == RoleEnum.MENTOR ? currentUser.getUserId() : null;
 
         // 2. Lấy danh sách
-        String searchKeyword = StringUtils.hasText(keyword) ? "%" + keyword.trim() + "%" : null;
+        String searchKeyword = StringUtils.hasText(keyword) ? "%" + keyword.trim() + "%" : "%%";
         Page<Student> page = studentRepository.findAll(searchKeyword, mentorId, pageable);
 
         return PageResponseHelper.toPageResponse(

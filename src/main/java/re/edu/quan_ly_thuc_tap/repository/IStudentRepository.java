@@ -16,7 +16,7 @@ public interface IStudentRepository extends JpaRepository<Student, Long> {
     @Query("""
     SELECT s FROM Student s
     JOIN s.user u
-    WHERE (:keyword IS NULL OR LOWER(u.fullName) LIKE LOWER(:keyword)) 
+    WHERE LOWER(u.fullName) LIKE LOWER(:keyword)
     AND (:mentorId IS NULL OR EXISTS (
         SELECT 1 FROM InternshipAssignment ia 
         WHERE ia.student = s AND ia.mentor.mentorId = :mentorId
