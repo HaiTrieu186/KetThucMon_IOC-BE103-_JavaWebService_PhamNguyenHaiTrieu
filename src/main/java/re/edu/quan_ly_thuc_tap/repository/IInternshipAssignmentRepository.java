@@ -8,6 +8,6 @@ import re.edu.quan_ly_thuc_tap.entity.InternshipAssignment;
 
 @Repository
 public interface IInternshipAssignmentRepository extends JpaRepository<InternshipAssignment, Long> {
-
+    boolean existsByPhase_PhaseId(Long phaseId);
     Boolean existsByStudent_StudentIdAndMentor_MentorId(Long studentStudentId, Long mentorMentorId);
 }
