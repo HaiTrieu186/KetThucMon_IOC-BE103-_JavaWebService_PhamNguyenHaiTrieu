@@ -19,6 +19,7 @@ import re.edu.quan_ly_thuc_tap.dto.response.pagination.PageResponse;
 import re.edu.quan_ly_thuc_tap.entity.Student;
 import re.edu.quan_ly_thuc_tap.entity.User;
 import re.edu.quan_ly_thuc_tap.exception.BadRequestException;
+import re.edu.quan_ly_thuc_tap.exception.DuplicateResourceException;
 import re.edu.quan_ly_thuc_tap.exception.ResourceNotFoundException;
 import re.edu.quan_ly_thuc_tap.mapper.StudentMapper;
 import re.edu.quan_ly_thuc_tap.repository.IInternshipAssignmentRepository;
@@ -96,9 +97,9 @@ public class StudentServiceImpl implements IStudentService {
     @Transactional
     public StudentResponse createStudent(StudentCreateRequestDTO dto) {
         // 1. Kiểm tra trùng lặp
-        if (userRepository.existsByUserName(dto.getUserName())) throw new BadRequestException("Lỗi: Tên đăng nhập đã tồn tại");
-        if (userRepository.existsByEmail(dto.getEmail())) throw new BadRequestException("Lỗi: Email đã tồn tại");
-        if (studentRepository.existsByStudentCode(dto.getStudentCode())) throw new BadRequestException("Lỗi: Mã sinh viên đã tồn tại");
+        if (userRepository.existsByUserName(dto.getUserName())) throw new DuplicateResourceException("Lỗi: Tên đăng nhập đã tồn tại");
+        if (userRepository.existsByEmail(dto.getEmail())) throw new DuplicateResourceException("Lỗi: Email đã tồn tại");
+        if (studentRepository.existsByStudentCode(dto.getStudentCode())) throw new DuplicateResourceException("Lỗi: Mã sinh viên đã tồn tại");
 
         // 2. Tạo User
         User user = studentMapper.toUser(dto);

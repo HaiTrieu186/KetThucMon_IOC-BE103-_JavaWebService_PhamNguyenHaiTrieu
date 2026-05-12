@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class MentorResponse {
     // User
     private Long userId;
@@ -17,7 +16,6 @@ public class MentorResponse {
     private String fullName;
     private String email;
     private String phoneNumber;
-    private String role;
     private Boolean isActive;
 
     // Mentor
