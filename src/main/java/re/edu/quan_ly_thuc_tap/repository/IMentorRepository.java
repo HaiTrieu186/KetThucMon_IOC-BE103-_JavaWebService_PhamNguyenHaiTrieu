@@ -18,9 +18,14 @@ public interface IMentorRepository extends JpaRepository<Mentor, Long> {
         SELECT m FROM Mentor m
         JOIN m.user u
         WHERE LOWER(u.fullName) LIKE LOWER(:keyword)
+        AND (:studentId IS NULL OR EXISTS (
+        SELECT 1 FROM InternshipAssignment ia
+        WHERE (ia.student.studentId=:studentId AND ia.mentor = m)
+    ))
     """)
     Page<Mentor> findAllMentors(
             @Param("keyword") String keyword,
+            @Param("studentId") Long studentId,
             Pageable pageable
     );
 

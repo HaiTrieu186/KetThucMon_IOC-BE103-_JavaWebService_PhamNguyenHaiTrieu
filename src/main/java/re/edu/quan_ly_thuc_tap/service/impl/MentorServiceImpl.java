@@ -22,6 +22,7 @@ import re.edu.quan_ly_thuc_tap.exception.BadRequestException;
 import re.edu.quan_ly_thuc_tap.exception.DuplicateResourceException;
 import re.edu.quan_ly_thuc_tap.exception.ResourceNotFoundException;
 import re.edu.quan_ly_thuc_tap.mapper.MentorMapper;
+import re.edu.quan_ly_thuc_tap.repository.IInternshipAssignmentRepository;
 import re.edu.quan_ly_thuc_tap.repository.IMentorRepository;
 import re.edu.quan_ly_thuc_tap.repository.IUserRepository;
 import re.edu.quan_ly_thuc_tap.service.IMentorService;
@@ -35,6 +36,7 @@ public class MentorServiceImpl implements IMentorService {
     private final PasswordEncoder passwordEncoder;
     private final IUserRepository userRepository;
     private final IMentorRepository mentorRepository;
+    private final IInternshipAssignmentRepository internshipAssignmentRepository;
 
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -48,7 +50,10 @@ public class MentorServiceImpl implements IMentorService {
 
 
         String searchKeyword = StringUtils.hasText(keyword) ? "%" + keyword.trim() + "%" : "%%";
-        Page<Mentor> page = mentorRepository.findAllMentors(searchKeyword, pageable);
+        Page<Mentor> page = mentorRepository.findAllMentors(
+                searchKeyword,
+                currentUser.getRole() == RoleEnum.STUDENT ? currentUser.getUserId():null,
+                pageable);
 
         // Student
         if (currentUser.getRole() == RoleEnum.STUDENT){
@@ -68,7 +73,16 @@ public class MentorServiceImpl implements IMentorService {
         );
 
         // Student
-        if (currentUser.getRole() == RoleEnum.STUDENT){
+        if (currentUser.getRole() == RoleEnum.STUDENT) {
+            boolean isAssigned = internshipAssignmentRepository.existsByStudent_StudentIdAndMentor_MentorId(
+                    currentUser.getUserId(),
+                    mentorId
+            );
+
+            if (!isAssigned) {
+                throw new AccessDeniedException("Lỗi: Bạn không được phân công cho giáo viên hướng dẫn này!");
+            }
+
             return mentorMapper.toMentorPublicResponse(m);
         }
 
