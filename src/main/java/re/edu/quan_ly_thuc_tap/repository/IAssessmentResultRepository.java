@@ -8,5 +8,8 @@ import re.edu.quan_ly_thuc_tap.entity.AssessmentResult;
 public interface IAssessmentResultRepository extends JpaRepository<AssessmentResult, Long> {
 
     // Kiểm tra xem tiêu chí đã được chấm điểm cho sinh viên nào chưa
-    boolean existsByCriterion_CriterionId(Long criterionId);
+    Boolean existsByCriterion_CriterionId(Long criterionId);
+
+    Boolean existsByRound_RoundId(Long roundId);
+
 }

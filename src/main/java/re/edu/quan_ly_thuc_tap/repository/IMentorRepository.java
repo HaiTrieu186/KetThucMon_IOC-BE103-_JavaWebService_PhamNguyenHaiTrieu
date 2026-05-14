@@ -16,7 +16,7 @@ public interface IMentorRepository extends JpaRepository<Mentor, Long> {
 
     @Query("""
         SELECT m FROM Mentor m
-        JOIN m.user u
+        JOIN FETCH m.user u
         WHERE LOWER(u.fullName) LIKE LOWER(:keyword)
         AND (:studentId IS NULL OR EXISTS (
         SELECT 1 FROM InternshipAssignment ia

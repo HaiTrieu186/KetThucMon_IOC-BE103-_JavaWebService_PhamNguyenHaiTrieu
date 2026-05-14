@@ -9,4 +9,6 @@ public interface IRoundCriteriaRepository extends JpaRepository<RoundCriteria, L
 
     // Kiểm tra xem tiêu chí này đã được sử dụng trong bất kỳ đợt đánh giá nào chưa
     boolean existsByCriterion_CriterionId(Long criterionId);
+    void deleteAllByRound_RoundId(Long roundId);
+
 }

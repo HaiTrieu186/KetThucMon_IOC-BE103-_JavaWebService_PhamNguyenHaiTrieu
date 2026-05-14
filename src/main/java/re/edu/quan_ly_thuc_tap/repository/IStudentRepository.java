@@ -15,7 +15,7 @@ import java.util.Optional;
 public interface IStudentRepository extends JpaRepository<Student, Long> {
     @Query("""
     SELECT s FROM Student s
-    JOIN s.user u
+    JOIN FETCH s.user u
     WHERE LOWER(u.fullName) LIKE LOWER(:keyword)
     AND (:mentorId IS NULL OR EXISTS (
         SELECT 1 FROM InternshipAssignment ia 
