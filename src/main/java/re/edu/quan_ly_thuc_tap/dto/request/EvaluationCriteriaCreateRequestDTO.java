@@ -1,10 +1,6 @@
 package re.edu.quan_ly_thuc_tap.dto.request;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -24,6 +20,7 @@ public class EvaluationCriteriaCreateRequestDTO {
 
     @NotNull(message = "Điểm tối đa không được để trống")
     @DecimalMin(value = "0.0", inclusive = false, message = "Điểm tối đa phải lớn hơn 0")
+    @DecimalMax(value = "100.0", inclusive = true, message = "Điểm tối đa không được vượt quá 100") // Dòng mới thêm vào
     @Digits(integer = 3, fraction = 2, message = "Điểm tối đa chỉ được phép có tối đa 3 chữ số phần nguyên và 2 chữ số phần thập phân")
     private BigDecimal maxScore;
 }
