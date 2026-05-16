@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import re.edu.quan_ly_thuc_tap.dto.response.ApiResponse;
@@ -99,6 +100,16 @@ public class GlobalExceptionHandler {
     }
 
 
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<?> handleMissingParams(MissingServletRequestParameterException ex) {
+        String paramName = ex.getParameterName();
+        ApiResponse<?> response = ApiResponse.builder()
+                .success(false)
+                .message("Lỗi: Thiếu tham số bắt buộc '" + paramName + "' trên URL!")
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<?> handleBadCredentialsException(BadCredentialsException ex) {

@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/assessment_rounds")
+@RequestMapping("/api/assessment-rounds")
 public class AssessmentRoundController {
 
     private final IAssessmentRoundService assessmentRoundService;

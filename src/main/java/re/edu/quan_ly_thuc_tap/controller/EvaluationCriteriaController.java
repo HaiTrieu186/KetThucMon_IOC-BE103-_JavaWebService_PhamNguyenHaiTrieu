@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/evaluation_criteria")
+@RequestMapping("/api/evaluation-criteria")
 public class EvaluationCriteriaController {
 
     private final IEvaluationCriteriaService evaluationCriteriaService;
