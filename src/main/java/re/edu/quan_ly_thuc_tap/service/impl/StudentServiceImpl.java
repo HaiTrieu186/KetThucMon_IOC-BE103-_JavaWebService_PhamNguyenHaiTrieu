@@ -39,19 +39,12 @@ public class StudentServiceImpl implements IStudentService {
     private final IStudentRepository studentRepository;
     private final IInternshipAssignmentRepository internshipAssignmentRepository;
 
-
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsCustom userDetails = (UserDetailsCustom) authentication.getPrincipal();
-        return userDetails.getUser();
-    }
-
     @Override
-    public PageResponse<StudentResponse> findAllStudents(String keyword, Pageable pageable) {
-        User currentUser = getCurrentUser();
+    public PageResponse<StudentResponse> findAllStudents(String keyword, Long userId,
+                                                         RoleEnum role, Pageable pageable) {
 
         // 1. Kiểm tra xem có phải mentor không
-        Long mentorId = currentUser.getRole() == RoleEnum.MENTOR ? currentUser.getUserId() : null;
+        Long mentorId = role == RoleEnum.MENTOR ? userId : null;
 
         // 2. Lấy danh sách
         String searchKeyword = StringUtils.hasText(keyword) ? "%" + keyword.trim() + "%" : "%%";
@@ -63,8 +56,7 @@ public class StudentServiceImpl implements IStudentService {
     }
 
     @Override
-    public StudentResponse findStudentById(Long studentId) {
-        User currentUser = getCurrentUser();
+    public StudentResponse findStudentById(Long studentId, Long userId, RoleEnum role) {
 
         // 1. Kiểm tra mã sinh viên
         Student s = studentRepository.findById(studentId).orElseThrow(
@@ -73,18 +65,16 @@ public class StudentServiceImpl implements IStudentService {
 
         // 2. Phân quyền
         // STUDENT -> Chỉ được xem chính mình
-        if (currentUser.getRole() == RoleEnum.STUDENT) {
-            if (!studentId.equals(currentUser.getUserId())) {
+        if (role == RoleEnum.STUDENT) {
+            if (!studentId.equals(userId)) {
                 throw new AccessDeniedException("Lỗi: Bạn không có quyền xem thông tin của sinh viên khác!");
             }
         }
 
         // MENTOR -> Chỉ được xem sinh viên mình đang hướng dẫn
-        else if (currentUser.getRole() == RoleEnum.MENTOR) {
-            boolean isAssigned = internshipAssignmentRepository.existsByStudent_StudentIdAndMentor_MentorId(
-                    studentId, currentUser.getUserId()
-            );
-
+        else if (role == RoleEnum.MENTOR) {
+            boolean isAssigned = internshipAssignmentRepository
+                    .existsByStudent_StudentIdAndMentor_MentorId(studentId, userId);
             if (!isAssigned) {
                 throw new AccessDeniedException("Lỗi: Bạn không được phân công hướng dẫn sinh viên này!");
             }
@@ -118,13 +108,14 @@ public class StudentServiceImpl implements IStudentService {
 
     @Override
     @Transactional
-    public StudentResponse updateStudent(Long studentId, StudentUpdateRequestDTO dto) {
-        User currentUser = getCurrentUser();
+    public StudentResponse updateStudent(Long studentId, StudentUpdateRequestDTO dto,
+                                         Long currentUserId, RoleEnum role) {
+
         Student student = studentRepository.findById(studentId).orElseThrow(
                 () -> new ResourceNotFoundException("Không tìm thấy sinh viên id: " + studentId));
 
         // STUDENT thì chỉ được sửa chính mình
-        if (currentUser.getRole() == RoleEnum.STUDENT && !studentId.equals(currentUser.getUserId())) {
+        if (role == RoleEnum.STUDENT && !studentId.equals(currentUserId)) {
             throw new AccessDeniedException("Bạn không có quyền cập nhật thông tin người khác!");
         }
 

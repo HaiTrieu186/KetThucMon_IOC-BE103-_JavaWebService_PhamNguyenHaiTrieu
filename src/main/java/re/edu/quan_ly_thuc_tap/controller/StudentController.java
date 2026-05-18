@@ -2,13 +2,16 @@ package re.edu.quan_ly_thuc_tap.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import re.edu.quan_ly_thuc_tap.config.security.UserDetailsCustom;
 import re.edu.quan_ly_thuc_tap.dto.request.StudentCreateRequestDTO;
 import re.edu.quan_ly_thuc_tap.dto.request.StudentUpdateRequestDTO;
 import re.edu.quan_ly_thuc_tap.dto.response.ApiResponse;
@@ -31,15 +34,21 @@ public class StudentController {
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MENTOR')")
     public ResponseEntity<?> getAllStudents(
+            @AuthenticationPrincipal UserDetailsCustom userDetails,
             @RequestParam(required = false) String keyword,
-            @PageableDefault(
-                    page = 0,
-                    size = 10,
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            ) Pageable pageable
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
+            @RequestParam(required = false, defaultValue = "DESC") Sort.Direction direction
     ) {
-        PageResponse<StudentResponse> data = studentService.findAllStudents(keyword, pageable);
+        Sort sort = Sort.by(direction, sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+        PageResponse<StudentResponse> data = studentService.findAllStudents(
+                keyword,
+                userDetails.getUser().getUserId(),
+                userDetails.getUser().getRole(),
+                pageable
+        );
 
         return ResponseEntity.ok(
                 ApiResponse.<PageResponse<StudentResponse>>builder()
@@ -58,10 +67,14 @@ public class StudentController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MENTOR', 'STUDENT')")
     public ResponseEntity<?> getStudentById(
+            @AuthenticationPrincipal UserDetailsCustom userDetails,
             @PathVariable Long id
     ) {
-        StudentResponse data = studentService.findStudentById(id);
-
+        StudentResponse data = studentService.findStudentById(
+                id,
+                userDetails.getUser().getUserId(),
+                userDetails.getUser().getRole()
+        );
         return ResponseEntity.ok(
                 ApiResponse.<StudentResponse>builder()
                         .success(true)
@@ -98,11 +111,15 @@ public class StudentController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'STUDENT')")
     public ResponseEntity<?> updateStudent(
+            @AuthenticationPrincipal UserDetailsCustom userDetails,
             @PathVariable Long id,
             @Valid @RequestBody StudentUpdateRequestDTO dto
     ) {
-        StudentResponse data = studentService.updateStudent(id, dto);
-
+        StudentResponse data = studentService.updateStudent(
+                id, dto,
+                userDetails.getUser().getUserId(),
+                userDetails.getUser().getRole()
+        );
         return ResponseEntity.ok(
                 ApiResponse.<StudentResponse>builder()
                         .success(true)

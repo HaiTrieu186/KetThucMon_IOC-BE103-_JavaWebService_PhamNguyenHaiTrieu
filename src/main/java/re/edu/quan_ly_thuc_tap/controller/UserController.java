@@ -3,13 +3,16 @@ package re.edu.quan_ly_thuc_tap.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import re.edu.quan_ly_thuc_tap.config.security.UserDetailsCustom;
 import re.edu.quan_ly_thuc_tap.dto.request.UserCreateRequestDTO;
 import re.edu.quan_ly_thuc_tap.dto.request.UserUpdateRequestDTO;
 import re.edu.quan_ly_thuc_tap.dto.request.UserUpdateRoleRequestDTO;
@@ -34,8 +37,13 @@ public class UserController {
     @GetMapping
     public ResponseEntity<?> getAllUsers(
             @RequestParam(required = false) RoleEnum role,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
+            @RequestParam(required = false, defaultValue = "DESC") Sort.Direction direction
     ) {
+        Sort sort = Sort.by(direction, sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
         PageResponse<UserResponse> pageResponse = userService.getAllUsers(role, pageable);
 
         return ResponseEntity.ok(
@@ -97,6 +105,7 @@ public class UserController {
     //  PUT /api/users/{id}/status
     @PutMapping("/{userId}/status")
     public ResponseEntity<?> updateStatus(
+            @AuthenticationPrincipal UserDetailsCustom userDetails,
             @PathVariable Long userId,
             @Valid @RequestBody UserUpdateStatusRequestDTO dto
     ) {
@@ -104,7 +113,7 @@ public class UserController {
                 ApiResponse.<UserResponse>builder()
                         .success(true)
                         .message("Cập nhật trạng thái người dùng thành công!")
-                        .data(userService.updateStatus(userId, dto))
+                        .data(userService.updateStatus(userId, dto, userDetails.getUser().getUserId()))
                         .timestamp(LocalDateTime.now())
                         .build()
         );
@@ -129,8 +138,11 @@ public class UserController {
 
     //  DELETE /api/users/{id}
     @DeleteMapping("/{userId}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
-        userService.deleteUser(userId);
+    public ResponseEntity<?> deleteUser(
+            @AuthenticationPrincipal UserDetailsCustom userDetails,
+            @PathVariable Long userId
+    ) {
+        userService.deleteUser(userId, userDetails.getUser().getUserId());
         return ResponseEntity.ok(
                 ApiResponse.<Void>builder()
                         .success(true)

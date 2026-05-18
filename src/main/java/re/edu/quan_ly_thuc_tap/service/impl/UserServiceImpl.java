@@ -32,19 +32,11 @@ public class UserServiceImpl implements IUserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
-
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsCustom userDetails = (UserDetailsCustom) authentication.getPrincipal();
-        return userDetails.getUser();
-    }
-
     @Override
     public PageResponse<UserResponse> getAllUsers(RoleEnum role, Pageable pageable) {
         Page<User> users = (role != null)
                 ? userRepository.findByRole(role, pageable)
                 : userRepository.findAll(pageable);
-
         return PageResponseHelper.toPageResponse(users.map(userMapper::toUserResponse));
     }
 
@@ -95,12 +87,12 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional
-    public UserResponse updateStatus(Long userId, UserUpdateStatusRequestDTO request) {
+    public UserResponse updateStatus(Long userId, UserUpdateStatusRequestDTO request, Long currentUserId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lỗi: Không tìm thấy user với id: " + userId));
 
-        // Không cho vô hiệu hóa chính mình
-        if (user.getUserId().equals(getCurrentUser().getUserId())) {
+        // Không cho khóa chính mình
+        if (user.getUserId().equals(currentUserId)) {
             throw new BadRequestException("Lỗi: Không thể thay đổi trạng thái tài khoản của chính mình");
         }
 
@@ -126,12 +118,11 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional
-    public void deleteUser(Long userId) {
+    public void deleteUser(Long userId, Long currentUserId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lỗi: Không tìm thấy user với id: " + userId));
 
-        // Không cho tự xóa chính mình
-        if (user.getUserId().equals(getCurrentUser().getUserId())) {
+        if (user.getUserId().equals(currentUserId)) {
             throw new BadRequestException("Lỗi: Không thể xóa tài khoản của chính mình");
         }
 

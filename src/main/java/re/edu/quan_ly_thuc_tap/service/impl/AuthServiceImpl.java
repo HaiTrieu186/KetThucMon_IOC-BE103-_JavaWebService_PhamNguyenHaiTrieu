@@ -32,15 +32,6 @@ public class AuthServiceImpl implements IAuthService {
     private final IUserRepository userRepository;
     private final AuthenticationManager authenticationManager;
 
-    private User getCurrentUser() {
-        // 1. Lấy authentication từ Context
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        // 2. Ép kiểu
-        UserDetailsCustom userDetails = (UserDetailsCustom) authentication.getPrincipal();
-
-        return userDetails.getUser();
-    }
 
     @Override
     public AuthResponse login(AuthLoginRequestDTO request) {
@@ -73,9 +64,8 @@ public class AuthServiceImpl implements IAuthService {
     }
 
     @Override
-    public UserResponse getMyInfo() {
-        User crrUser = getCurrentUser();
-        return userMapper.toUserResponse(crrUser);
+    public UserResponse getMyInfo(User currentUser) {
+        return userMapper.toUserResponse(currentUser);
     }
 
     @Override
@@ -116,13 +106,9 @@ public class AuthServiceImpl implements IAuthService {
     }
 
     @Override
-    public void logout() {
-        // 1. Lấy user hiện tại từ SecurityContext
-        User user = getCurrentUser();
-
-        // 2. Xóa refresh token trong DB
-        user.setRefreshToken(null);
-        userRepository.save(user);
+    public void logout(User currentUser) {
+        currentUser.setRefreshToken(null);
+        userRepository.save(currentUser);
     }
 
 

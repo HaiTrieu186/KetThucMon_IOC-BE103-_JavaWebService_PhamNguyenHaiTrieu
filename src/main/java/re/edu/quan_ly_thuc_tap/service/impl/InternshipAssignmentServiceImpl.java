@@ -43,16 +43,16 @@ public class InternshipAssignmentServiceImpl implements IInternshipAssignmentSer
 
     // ─── GET ALL ─────────────────────────────────────────────────────────────
     @Override
-    public PageResponse<InternshipAssignmentResponse> getAllAssignments(Pageable pageable) {
-        User currentUser = getCurrentUser();
+    public PageResponse<InternshipAssignmentResponse> getAllAssignments(
+            Long userId, RoleEnum role, Pageable pageable) {
 
         Long studentId = null;
         Long mentorId  = null;
 
-        if (currentUser.getRole() == RoleEnum.STUDENT) {
-            studentId = currentUser.getUserId();
-        } else if (currentUser.getRole() == RoleEnum.MENTOR) {
-            mentorId = currentUser.getUserId();
+        if (role == RoleEnum.STUDENT) {
+            studentId = userId;
+        } else if (role == RoleEnum.MENTOR) {
+            mentorId = userId;
         }
         // ADMIN: cả 2 null → lấy tất cả
 
@@ -65,21 +65,21 @@ public class InternshipAssignmentServiceImpl implements IInternshipAssignmentSer
 
     // ─── GET BY ID ────────────────────────────────────────────────────────────
     @Override
-    public InternshipAssignmentResponse getAssignmentById(Long assignmentId) {
-        User currentUser = getCurrentUser();
+    public InternshipAssignmentResponse getAssignmentById(
+            Long assignmentId, Long userId, RoleEnum role) {
 
         InternshipAssignment assignment = assignmentRepository.findByIdWithDetails(assignmentId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Lỗi: Không tìm thấy phân công thực tập với id: " + assignmentId));
 
-        if (currentUser.getRole() == RoleEnum.MENTOR) {
-            if (!assignment.getMentor().getMentorId().equals(currentUser.getUserId())) {
+        if (role == RoleEnum.MENTOR) {
+            if (!assignment.getMentor().getMentorId().equals(userId)) {
                 throw new AccessDeniedException("Lỗi: Bạn không có quyền xem phân công này!");
             }
         }
 
-        if (currentUser.getRole() == RoleEnum.STUDENT) {
-            if (!assignment.getStudent().getStudentId().equals(currentUser.getUserId())) {
+        if (role == RoleEnum.STUDENT) {
+            if (!assignment.getStudent().getStudentId().equals(userId)) {
                 throw new AccessDeniedException("Lỗi: Bạn không có quyền xem phân công này!");
             }
         }

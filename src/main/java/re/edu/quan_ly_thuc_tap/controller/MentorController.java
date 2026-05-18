@@ -2,13 +2,16 @@ package re.edu.quan_ly_thuc_tap.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import re.edu.quan_ly_thuc_tap.config.security.UserDetailsCustom;
 import re.edu.quan_ly_thuc_tap.dto.request.MentorCreateRequestDTO;
 import re.edu.quan_ly_thuc_tap.dto.request.MentorUpdateRequestDTO;
 import re.edu.quan_ly_thuc_tap.dto.response.ApiResponse;
@@ -32,16 +35,22 @@ public class MentorController {
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'STUDENT')")
     public ResponseEntity<?> getAllMentors(
+            @AuthenticationPrincipal UserDetailsCustom userDetails,
             @RequestParam(required = false) String keyword,
-            @PageableDefault(
-                    page = 0,
-                    size = 10,
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            ) Pageable pageable
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
+            @RequestParam(required = false, defaultValue = "DESC") Sort.Direction direction
     ) {
-        PageResponse<?> data = mentorService.getAllMentor(keyword, pageable);
+        Sort sort = Sort.by(direction, sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
 
+        PageResponse<?> data = mentorService.getAllMentor(
+                keyword,
+                userDetails.getUser().getUserId(),
+                userDetails.getUser().getRole(),
+                pageable
+        );
         return ResponseEntity.ok(
                 ApiResponse.<PageResponse<?>>builder()
                         .success(true)
@@ -61,10 +70,14 @@ public class MentorController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MENTOR', 'STUDENT')")
     public ResponseEntity<?> getMentorById(
+            @AuthenticationPrincipal UserDetailsCustom userDetails,
             @PathVariable Long id
     ) {
-        Object data = mentorService.findMentorById(id);
-
+        Object data = mentorService.findMentorById(
+                id,
+                userDetails.getUser().getUserId(),
+                userDetails.getUser().getRole()
+        );
         return ResponseEntity.ok(
                 ApiResponse.<Object>builder()
                         .success(true)
@@ -103,11 +116,15 @@ public class MentorController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MENTOR')")
     public ResponseEntity<?> updateMentor(
+            @AuthenticationPrincipal UserDetailsCustom userDetails,
             @PathVariable Long id,
             @Valid @RequestBody MentorUpdateRequestDTO dto
     ) {
-        MentorResponse data = mentorService.updateMentor(id, dto);
-
+        MentorResponse data = mentorService.updateMentor(
+                id, dto,
+                userDetails.getUser().getUserId(),
+                userDetails.getUser().getRole()
+        );
         return ResponseEntity.ok(
                 ApiResponse.<MentorResponse>builder()
                         .success(true)

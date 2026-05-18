@@ -38,70 +38,51 @@ public class MentorServiceImpl implements IMentorService {
     private final IMentorRepository mentorRepository;
     private final IInternshipAssignmentRepository internshipAssignmentRepository;
 
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsCustom userDetails = (UserDetailsCustom) authentication.getPrincipal();
-        return userDetails.getUser();
-    }
-
     @Override
-    public PageResponse<?> getAllMentor(String keyword, Pageable pageable) {
-        User currentUser = getCurrentUser();
-
-
+    public PageResponse<?> getAllMentor(String keyword, Long userId, RoleEnum role, Pageable pageable) {
         String searchKeyword = StringUtils.hasText(keyword) ? "%" + keyword.trim() + "%" : "%%";
+
         Page<Mentor> page = mentorRepository.findAllMentors(
                 searchKeyword,
-                currentUser.getRole() == RoleEnum.STUDENT ? currentUser.getUserId():null,
-                pageable);
+                role == RoleEnum.STUDENT ? userId : null,
+                pageable
+        );
 
-        // Student
-        if (currentUser.getRole() == RoleEnum.STUDENT){
+        if (role == RoleEnum.STUDENT) {
             return PageResponseHelper.toPageResponse(page.map(mentorMapper::toMentorPublicResponse));
         }
 
-        // Admin
         return PageResponseHelper.toPageResponse(page.map(mentorMapper::toMentorResponse));
     }
 
     @Override
-    public Object findMentorById(Long mentorId) {
-        User currentUser = getCurrentUser();
-
+    public Object findMentorById(Long mentorId, Long userId, RoleEnum role) {
         Mentor m = mentorRepository.findById(mentorId).orElseThrow(
-                () -> new ResourceNotFoundException("Lỗi: không tìm thấy mentor với id: "+mentorId)
+                () -> new ResourceNotFoundException("Lỗi: không tìm thấy mentor với id: " + mentorId)
         );
 
-        // Student
-        if (currentUser.getRole() == RoleEnum.STUDENT) {
+        if (role == RoleEnum.STUDENT) {
             boolean isAssigned = internshipAssignmentRepository.existsByStudent_StudentIdAndMentor_MentorId(
-                    currentUser.getUserId(),
-                    mentorId
+                    userId, mentorId
             );
-
             if (!isAssigned) {
                 throw new AccessDeniedException("Lỗi: Bạn không được phân công cho giáo viên hướng dẫn này!");
             }
-
             return mentorMapper.toMentorPublicResponse(m);
         }
 
-        // Mentor
-        if (currentUser.getRole() == RoleEnum.MENTOR){
-            if (!mentorId.equals(currentUser.getUserId())) {
+        if (role == RoleEnum.MENTOR) {
+            if (!mentorId.equals(userId)) {
                 throw new AccessDeniedException("Lỗi: Bạn không có quyền xem thông tin của mentor khác!");
             }
         }
 
-        // Admin và Mentor trả về như nhau
         return mentorMapper.toMentorResponse(m);
-
     }
 
     @Override
     @Transactional
     public MentorResponse createMentor(MentorCreateRequestDTO dto) {
-        // 1. Kiểm tra trùng lặp dữ liệu
         if (userRepository.existsByUserName(dto.getUserName())) {
             throw new DuplicateResourceException("Lỗi: Tên đăng nhập đã tồn tại!");
         }
@@ -109,14 +90,12 @@ public class MentorServiceImpl implements IMentorService {
             throw new DuplicateResourceException("Lỗi: Email đã tồn tại!");
         }
 
-        // 2. Lưu User (để lấy được ID )
         User user = mentorMapper.toUser(dto);
         user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         user.setRole(RoleEnum.MENTOR);
         user.setIsActive(true);
         User savedUser = userRepository.save(user);
 
-        // 3. Lưu Mentor
         Mentor mentor = mentorMapper.toMentor(dto);
         mentor.setUser(savedUser);
         Mentor savedMentor = mentorRepository.save(mentor);
@@ -126,33 +105,29 @@ public class MentorServiceImpl implements IMentorService {
 
     @Override
     @Transactional
-    public MentorResponse updateMentor(Long mentorId, MentorUpdateRequestDTO dto) {
-        User currentUser = getCurrentUser();
-
+    public MentorResponse updateMentor(Long mentorId, MentorUpdateRequestDTO dto,
+                                       Long currentUserId, RoleEnum role) {
         Mentor mentor = mentorRepository.findById(mentorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giáo viên hướng dẫn với id: " + mentorId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy giáo viên hướng dẫn với id: " + mentorId));
 
-        // 1. MENTOR chỉ được cập nhật chính mình
-        if (currentUser.getRole() == RoleEnum.MENTOR) {
-            if (!mentorId.equals(currentUser.getUserId())) {
+        if (role == RoleEnum.MENTOR) {
+            if (!mentorId.equals(currentUserId)) {
                 throw new AccessDeniedException("Lỗi: Bạn không có quyền cập nhật thông tin của giáo viên khác!");
             }
         }
 
-        // 2. Kiểm tra email trùng lặp nếu có sự thay đổi email
         if (!dto.getEmail().equals(mentor.getUser().getEmail())) {
             if (userRepository.existsByEmail(dto.getEmail())) {
                 throw new BadRequestException("Lỗi: Email đã được sử dụng bởi người dùng khác!");
             }
         }
 
-        // 3. Cập nhật
         mentorMapper.updateUserFromDto(dto, mentor.getUser());
         mentorMapper.updateMentorFromDto(dto, mentor);
 
-        // 4. Lưu lại vào DB
-        userRepository.save(mentor.getUser()); // Lưu bảng Users
-        Mentor updatedMentor = mentorRepository.save(mentor); // Lưu bảng Mentors
+        userRepository.save(mentor.getUser());
+        Mentor updatedMentor = mentorRepository.save(mentor);
 
         return mentorMapper.toMentorResponse(updatedMentor);
     }

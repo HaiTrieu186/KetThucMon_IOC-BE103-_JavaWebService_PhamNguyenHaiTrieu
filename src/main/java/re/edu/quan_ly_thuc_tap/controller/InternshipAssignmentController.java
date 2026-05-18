@@ -8,7 +8,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import re.edu.quan_ly_thuc_tap.config.security.UserDetailsCustom;
 import re.edu.quan_ly_thuc_tap.dto.request.InternshipAssignmentCreateRequestDTO;
 import re.edu.quan_ly_thuc_tap.dto.request.InternshipAssignmentUpdateStatusRequestDTO;
 import re.edu.quan_ly_thuc_tap.dto.response.ApiResponse;
@@ -26,7 +28,7 @@ public class InternshipAssignmentController {
     private final IInternshipAssignmentService assignmentService;
 
     /**
-     * 38 - Lấy danh sách phân công thực tập (lọc theo quyền và user_id)
+     * Lấy danh sách phân công thực tập (lọc theo quyền và user_id)
      * ADMIN   : Xem tất cả
      * MENTOR  : Chỉ xem phân công mình đang hướng dẫn
      * STUDENT : Chỉ xem phân công của chính mình
@@ -34,6 +36,7 @@ public class InternshipAssignmentController {
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MENTOR', 'STUDENT')")
     public ResponseEntity<?> getAllAssignments(
+            @AuthenticationPrincipal UserDetailsCustom userDetails,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
@@ -42,8 +45,11 @@ public class InternshipAssignmentController {
         Sort sort = Sort.by(direction, sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        PageResponse<InternshipAssignmentResponse> data = assignmentService.getAllAssignments(pageable);
-
+        PageResponse<InternshipAssignmentResponse> data = assignmentService.getAllAssignments(
+                userDetails.getUser().getUserId(),
+                userDetails.getUser().getRole(),
+                pageable
+        );
         return ResponseEntity.ok(
                 ApiResponse.<PageResponse<InternshipAssignmentResponse>>builder()
                         .success(true)
@@ -55,7 +61,7 @@ public class InternshipAssignmentController {
     }
 
     /**
-     * 39 - Lấy chi tiết một phân công thực tập theo ID (lọc theo quyền và user_id)
+     * Lấy chi tiết một phân công thực tập theo ID (lọc theo quyền và user_id)
      * ADMIN   : Xem tất cả
      * MENTOR  : Chỉ xem nếu mình là người hướng dẫn trong phân công đó
      * STUDENT : Chỉ xem phân công của chính mình
@@ -63,10 +69,14 @@ public class InternshipAssignmentController {
     @GetMapping("/{assignment_id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MENTOR', 'STUDENT')")
     public ResponseEntity<?> getAssignmentById(
+            @AuthenticationPrincipal UserDetailsCustom userDetails,
             @PathVariable("assignment_id") Long assignmentId
     ) {
-        InternshipAssignmentResponse data = assignmentService.getAssignmentById(assignmentId);
-
+        InternshipAssignmentResponse data = assignmentService.getAssignmentById(
+                assignmentId,
+                userDetails.getUser().getUserId(),
+                userDetails.getUser().getRole()
+        );
         return ResponseEntity.ok(
                 ApiResponse.<InternshipAssignmentResponse>builder()
                         .success(true)
@@ -78,7 +88,7 @@ public class InternshipAssignmentController {
     }
 
     /**
-     * 40 - Tạo phân công thực tập mới (gán sinh viên cho giáo viên trong giai đoạn)
+     * Tạo phân công thực tập mới (gán sinh viên cho giáo viên trong giai đoạn)
      * Chỉ ADMIN
      */
     @PostMapping
@@ -99,7 +109,7 @@ public class InternshipAssignmentController {
     }
 
     /**
-     * 41 - Cập nhật trạng thái phân công thực tập (PENDING, IN_PROGRESS, ...)
+     * Cập nhật trạng thái phân công thực tập (PENDING, IN_PROGRESS, ...)
      * Chỉ ADMIN
      */
     @PutMapping("/{assignment_id}/status")
