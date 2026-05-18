@@ -56,7 +56,8 @@ public class AssessmentResult {
     @JoinColumn(name = "evaluated_by", nullable = false)
     private User evaluatedBy;
 
-    @Column(name = "evaluation_date")
+    @CreationTimestamp
+    @Column(name = "evaluation_date", updatable = false)
     private LocalDateTime evaluationDate;
 
     @CreationTimestamp
