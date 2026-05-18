@@ -42,11 +42,13 @@ public class InternshipAssignment {
     @JoinColumn(name = "phase_id", nullable = false)
     private InternshipPhase phase;
 
-    @Column(name = "assigned_date")
+    @CreationTimestamp
+    @Column(name = "assigned_date", updatable = false)
     private LocalDateTime assignedDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
+    @Builder.Default
     private AssignmentStatusEnum status = AssignmentStatusEnum.PENDING;
 
     @CreationTimestamp
